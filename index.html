@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant Pro</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --accent-color: #10b981;
+            --chat-bg: rgba(17, 24, 39, 0.95);
+            --sidebar-width: 300px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            left: -100%;
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100%;
+            background: rgba(17, 24, 39, 0.98);
+            backdrop-filter: blur(25px);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            padding: 2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-header {
+            font-size: 1.8rem;
+            background: linear-gradient(45deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sidebar-image {
+            width: 100%;
+            border-radius: 1rem;
+            aspect-ratio: 1;
+            object-fit: cover;
+            margin-top: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .menu-toggle {
+            position: fixed;
+            left: 0.3rem;
+            top: 1.5rem;
+            z-index: 1001;
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 0.8rem;
+            border-radius: 0.8rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            width: 50px;
+            font-size: large;
+            font-weight: bold;
+
+
+        }
+
+        .menu-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Main Container */
+        .container {
+            margin-left: 0;
+            transition: margin 0.3s ease;
+            padding: 2rem;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 2rem;
+            background: var(--chat-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+            margin-left: 10%;
+        }
+
+        /* Messages */
+        .message {
+            max-width: 75%;
+            padding: 1.25rem;
+            border-radius: 1.25rem;
+            animation: messagePop 0.3s ease;
+        }
+
+        .user-message {
+            background: var(--primary-gradient);
+            color: white;
+            margin-left: auto;
+            border-end-end-radius: 0.5rem;
+        }
+
+        .bot-message {
+            background: rgba(255,255,255,0.05);
+            margin-right: auto;
+            border-end-start-radius: 0.5rem;
+            position: relative;
+        }
+
+        .bot-message::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 0;
+            border: 10px solid transparent;
+            border-right-color: rgba(255,255,255,0.05);
+        }
+
+        /* Images */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .responsive-image {
+            width: 100%;
+            height: 200px;
+            border-radius: 1rem;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+            background: linear-gradient(90deg, #1e293b, #334155);
+        }
+
+        .responsive-image:hover {
+            transform: scale(1.03);
+        }
+
+        /* Input Area */
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            background: var(--chat-bg);
+            backdrop-filter: blur(20px);
+            padding: 1rem;
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        input {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1rem;
+        }
+
+        input:focus {
+            outline: none;
+        }
+
+        button {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.75rem;
+            background: var(--primary-gradient);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Animations */
+        @keyframes messagePop {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+
+            .sidebar {
+                width: 85%;
+                left: -85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <nav class="sidebar" id="sidebar">
+        <h2 class="sidebar-header">AI Control Panel</h2>
+        <div class="sidebar-content">
+            <p>Welcome to AI Assistant Pro! Features:</p>
+            <ul style="color: #94a3b8; padding-left: 1.5rem;">
+                <li>Smart Responses</li>
+                <li>Image Integration</li>
+                <li>Preset Answers</li>
+                <li>Customizable UI</li>
+            </ul>
+            <img src="https://source.unsplash.com/random/800x800?ai,technology" class="sidebar-image" alt="AI Technology">
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <main class="chat-container" id="chatContainer">
+            <div class="message bot-message">
+                Welcome! How can I assist you today?
+            </div>
+        </main>
+
+        <div class="input-group">
+            <input type="text" id="userInput" placeholder="Type your question..." autocomplete="off">
+            <button onclick="processInput()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Preset Responses with Images
+        const AI_RESPONSES = [
+            {
+                text: "Here's a detailed analysis: Innovation drives progress. Continuous learning and adaptation are key to success in technology.",
+                images: [
+                    "image1.jpg",
+                    "image2.jpg"
+                ]
+            },
+            {
+                text: "Key points to consider: 1. Data security 2. User experience 3. Scalability 4. Maintenance",
+                images: [
+                    "https://source.unsplash.com/random/800x600?security",
+                    "https://source.unsplash.com/random/800x600?data"
+                ]
+            },
+            {
+                text: "According to recent studies: Artificial Intelligence adoption has grown by 270% in last 4 years.",
+                images: [
+                    "https://source.unsplash.com/random/800x600?statistics",
+                    "https://source.unsplash.com/random/800x600?growth"
+                ]
+            }
+        ];
+    
+        // System Variables
+        let currentIndex = 0;
+    
+        // Toggle Sidebar
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+    
+        // Close sidebar when clicking outside
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.querySelector('.menu-toggle');
+            
+            if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+    
+        // Create Message Element
+        function createMessage(text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.innerHTML = text;
+            return messageDiv;
+        }
+    
+        // Add Images
+        function addImages(images) {
+            const container = document.createElement('div');
+            container.className = 'image-grid';
+            
+            images.forEach(src => {
+                const img = document.createElement('img');
+                img.className = 'responsive-image';
+                img.src = src;
+                img.loading = 'lazy';
+                container.appendChild(img);
+            });
+            
+            return container;
+        }
+    
+        // Process User Input (Serial Version)
+        async function processInput() {
+            const input = document.getElementById('userInput');
+            const question = input.value.trim();
+            if (!question) return;
+    
+            // Add user message
+            const userMessage = createMessage(question, true);
+            document.getElementById('chatContainer').appendChild(userMessage);
+            input.value = '';
+    
+            // Simulate AI processing
+            await new Promise(resolve => setTimeout(resolve, 800));
+    
+            // Get sequential response
+            const response = AI_RESPONSES[currentIndex % AI_RESPONSES.length];
+    
+            // Create bot message
+            const botMessage = createMessage(response.text);
+            if (response.images) {
+                botMessage.appendChild(addImages(response.images));
+            }
+    
+            // Add to chat
+            document.getElementById('chatContainer').appendChild(botMessage);
+            
+            // Update index
+            currentIndex++;
+    
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    
+        // Enter key handler
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') processInput();
+        });
+    </script>
+</body>
+</html>
